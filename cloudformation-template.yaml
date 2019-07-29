@@ -547,6 +547,14 @@ Resources:
             - opsworks:*
             Resource: "*"
             Effect: Allow
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-sts
+        PolicyDocument:
+          Statement:
+          - Action:
+            - sts:AssumeRole
+            Resource: "*"
+            Effect: Allow
 
   NodeSecurityGroup:
     DependsOn: AWSEKSCluster
