@@ -322,7 +322,6 @@ data:
         mutate {
           gsub => ["time", "\d$", ""]
           convert => { "level" => "string" }
-          add_field => { "logstash" => "yes" }
         }
         date {
           match => [ "time", "yyyy-MM-dd HH:mm:ss.SSS", "MMM dd yyyy HH:mm:ss", "MMM  d yyyy HH:mm:ss", "ISO8601" ]
