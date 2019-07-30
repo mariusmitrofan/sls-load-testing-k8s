@@ -7,7 +7,7 @@ metadata:
   namespace: kube-system
 data:
   mapRoles: |
-    - rolearn: <ARN of instance role (not instance profile)>
+    - rolearn: arn_aws_role_here
       username: system:node:{{EC2PrivateDNSName}}
       groups:
         - system:bootstrappers
@@ -435,9 +435,9 @@ spec:
         image: docker.elastic.co/logstash/logstash:7.2.0
         env:
         - name: ELASTICSEARCH_HOST
-          value: '<elasticsearch host here>'
+          value: 'ES_HOST'
         - name: ELASTICSEARCH_PORT
-          value: '9200'
+          value: 'ES_PORT'
         - name: XPACK_MONITORING_ENABLED
           value: 'FALSE'
         command:
@@ -608,9 +608,9 @@ spec:
         ]
         env:
         - name: ELASTICSEARCH_HOST
-          value: '<elasticsearch host here>'
+          value: 'ES_HOST'
         - name: ELASTICSEARCH_PORT
-          value: "9200"
+          value: "ES_PORT"
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -736,9 +736,9 @@ spec:
         ]
         env:
         - name: ELASTICSEARCH_HOST
-          value: '<elasticsearch host here>'
+          value: 'ES_HOST'
         - name: ELASTICSEARCH_PORT
-          value: "9200"
+          value: "ES_PORT"
         - name: NODE_NAME
           valueFrom:
             fieldRef:

@@ -1321,3 +1321,10 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-Endpoint"
+  Context:
+    Description: The context to use in kubeconfig
+    Value:
+      Fn::Sub: "arn:aws:eks:${AWS::Region}:${AWS::AccountId}:cluster/${ClusterName}"
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-Context"
