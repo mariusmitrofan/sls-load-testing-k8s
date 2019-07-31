@@ -157,6 +157,14 @@ Parameters:
     Default: netbears-node-group1
     AllowedPattern : ".+"
 
+  UseSpotFleetInstances:
+    Type: String
+    AllowedValues:
+    - 'true'
+    - 'false'
+    Default: 'true'
+    Description: Whether you want the node group to run Spot instances or On-Demand. Default is 'true' (SPOT)
+
   NewVpc:
     Type: String
     Default: new
@@ -171,7 +179,7 @@ Parameters:
     Default: vpc-7192df15
 
   Subnets:
-    Description: The subnets where workers can be created.
+    Description: The subnets where workers can be created. Please specify at least 2 subnets
     Type: List<AWS::EC2::Subnet::Id>
     Default: subnet-d1d412fb,subnet-a28e179f,subnet-9c6ea5c4
 
@@ -294,6 +302,9 @@ Metadata:
           - NodeVolumeSize
           - KeyName
           - BootstrapArguments
+          - UseSpotFleetInstances
+          - NodePublicIpAddress
+          - OpsWorksStackName
       -
         Label:
           default: "Worker Network Configuration"
@@ -346,6 +357,188 @@ Conditions:
       - Ref: NodePublicIpAddress
       - 'true'
 
+  UseSpotFleet:
+    Fn::Equals:
+      - Ref: UseSpotFleetInstances
+      - 'true'
+
+  UseAsg:
+    Fn::Equals:
+      - Ref: UseSpotFleetInstances
+      - 'false'
+
+Mappings:
+  Limits:
+    m5.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    m5.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    m5.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    m5.4xlarge:
+      Cpu: 16
+      RootSsdSize: 50
+      DockerSsdSize: 200
+    m5.12xlarge:
+      Cpu: 48
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    m5.24xlarge:
+      Cpu: 96
+      RootSsdSize: 100
+      DockerSsdSize: 750
+    m4.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    m4.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    m4.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    m4.4xlarge:
+      Cpu: 16
+      RootSsdSize: 50
+      DockerSsdSize: 200
+    m4.10xlarge:
+      Cpu: 40
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    m4.16xlarge:
+      Cpu: 64
+      RootSsdSize: 100
+      DockerSsdSize: 750
+    c5.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    c5.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    c5.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    c5.4xlarge:
+      Cpu: 16
+      RootSsdSize: 50
+      DockerSsdSize: 200
+    c5.9xlarge:
+      Cpu: 36
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    c5.18xlarge:
+      Cpu: 72
+      RootSsdSize: 100
+      DockerSsdSize: 750
+    c4.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    c4.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    c4.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    c4.4xlarge:
+      Cpu: 16
+      RootSsdSize: 50
+      DockerSsdSize: 200
+    c4.8xlarge:
+      Cpu: 36
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    g3.4xlarge:
+      Cpu: 16
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    g3.8xlarge:
+      Cpu: 32
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    g3.16xlarge:
+      Cpu: 64
+      RootSsdSize: 100
+      DockerSsdSize: 750
+    g2.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    g2.8xlarge:
+      Cpu: 32
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    r3.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r3.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r3.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r3.4xlarge:
+      Cpu: 16
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r3.8xlarge:
+      Cpu: 32
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    r4.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r4.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r4.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r4.4xlarge:
+      Cpu: 16
+      RootSsdSize: 50
+      DockerSsdSize: 200
+    r4.8xlarge:
+      Cpu: 32
+      RootSsdSize: 100
+      DockerSsdSize: 430
+    r4.16xlarge:
+      Cpu: 64
+      RootSsdSize: 100
+      DockerSsdSize: 750
+    r5.large:
+      Cpu: 2
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r5.xlarge:
+      Cpu: 4
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r5.2xlarge:
+      Cpu: 8
+      RootSsdSize: 25
+      DockerSsdSize: 100
+    r5.4xlarge:
+      Cpu: 16
 Resources:
 
   ServiceRole:
@@ -373,6 +566,7 @@ Resources:
                   - 'cloudwatch:DescribeAlarms'
                   - 'elasticloadbalancing:*'
                   - 'ecs:*'
+                  - 'eks:*'
                   - 'rds:*'
                 Resource: '*'
 
@@ -661,18 +855,106 @@ Resources:
       ToPort: 443
       FromPort: 443
 
-  NodeGroup:
+  SpotFleetIAMRole:
+    Condition: UseSpotFleet
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - spotfleet.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+      Policies:
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-GetInstanceProfile
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - iam:GetInstanceProfile
+            Resource: "*"
+
+  SpotFleetIAMAutoScaleRole:
+    Condition: UseSpotFleet
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - application-autoscaling.amazonaws.com
+            - eks.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetAutoscaleRole
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+
+  SpotFleet:
+    Type: AWS::EC2::SpotFleet
+    Condition: UseSpotFleet
+    DependsOn: AWSEKSCluster
+    Properties:
+      SpotFleetRequestConfigData:
+        AllocationStrategy: diversified
+        ExcessCapacityTerminationPolicy: default
+        IamFleetRole:
+          Fn::GetAtt:
+            - SpotFleetIAMRole
+            - Arn
+        InstanceInterruptionBehavior: terminate
+        ReplaceUnhealthyInstances: true
+        SpotPrice: '5'
+        TargetCapacity: 
+          Ref: NodeAutoScalingGroupMinSize
+        TerminateInstancesWithExpiration: true
+        LaunchTemplateConfigs:
+        - LaunchTemplateSpecification:
+            LaunchTemplateId:
+              Ref: LaunchTemplate
+            Version:
+              Fn::GetAtt:
+                - LaunchTemplate
+                - LatestVersionNumber
+          Overrides:
+          - InstanceType:
+              Ref: NodeInstanceType
+            WeightedCapacity: '1'
+            SubnetId:
+              Fn::If:
+                - CreateVpc
+                - Fn::If:
+                  - PublicNodes
+                  - Ref: PublicSubnet1
+                  - Ref: PrivateSubnet1
+                - Fn::Select:
+                  - '0'
+                  - Ref: Subnets
+          - InstanceType:
+              Ref: NodeInstanceType
+            WeightedCapacity: '1'
+            SubnetId:
+              Fn::If:
+                - CreateVpc
+                - Fn::If:
+                  - PublicNodes
+                  - Ref: PublicSubnet2
+                  - Ref: PrivateSubnet2
+                - Fn::Select:
+                  - '1'
+                  - Ref: Subnets
+  ASG:
+    Condition: UseAsg
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: AWSEKSCluster
     Properties:
-      DesiredCapacity:
-        Ref: NodeAutoScalingGroupMinSize
-      LaunchConfigurationName:
-        Ref: NodeLaunchConfig
-      MinSize:
-        Ref: NodeAutoScalingGroupMinSize
-      MaxSize:
-        Ref: NodeAutoScalingGroupMaxSize
       VPCZoneIdentifier:
         Fn::If:
           - CreateVpc
@@ -687,15 +969,34 @@ Resources:
               - Ref: PrivateSubnet2
               - Ref: PrivateSubnet3
           - Ref: Subnets
+      HealthCheckGracePeriod: '600'
+      HealthCheckType: EC2
+      LaunchTemplate:
+        LaunchTemplateId:
+          Ref: LaunchTemplate
+        Version:
+          Fn::GetAtt:
+            - LaunchTemplate
+            - LatestVersionNumber
+      MinSize:
+        Ref: NodeAutoScalingGroupMinSize
+      MaxSize:
+        Ref: NodeAutoScalingGroupMaxSize
+      DesiredCapacity:
+        Ref: NodeAutoScalingGroupMinSize
+      MetricsCollection:
+      - Metrics:
+        - GroupTotalInstances
+        Granularity: 1Minute
       Tags:
-      - Key: Name
-        Value:
-          Fn::Sub: "${ClusterName}-${NodeGroupName}-Node"
-        PropagateAtLaunch: 'true'
-      - Key:
-          Fn::Sub: 'kubernetes.io/cluster/${ClusterName}'
-        Value: 'owned'
-        PropagateAtLaunch: 'true'
+        - Key: Name
+          Value:
+            Fn::Sub: "${ClusterName}-${NodeGroupName}-Node"
+          PropagateAtLaunch: 'true'
+        - Key:
+            Fn::Sub: 'kubernetes.io/cluster/${ClusterName}'
+          Value: 'owned'
+          PropagateAtLaunch: 'true'
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: '1'
@@ -703,45 +1004,180 @@ Resources:
           Ref: NodeAutoScalingGroupMinSize
         PauseTime: 'PT5M'
 
-  NodeLaunchConfig:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    DependsOn: AWSEKSCluster
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
     Properties:
-      AssociatePublicIpAddress:
-        Ref: NodePublicIpAddress
-      IamInstanceProfile:
-        Ref: NodeInstanceProfile
-      ImageId:
-        Ref: NodeImageId
-      InstanceType:
-        Ref: NodeInstanceType
-      KeyName:
-        Ref: KeyName
-      SecurityGroups:
-      - Ref: NodeSecurityGroup
-      BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize:
-              Ref: NodeVolumeSize
-            VolumeType: gp2
-            DeleteOnTermination: true
-      UserData:
-        Fn::Base64:
-          Fn::Sub: |
-            #!/bin/bash
-            set -o xtrace
-            yum install -y jq awscli
-            aws opsworks register --infrastructure-class ec2 --region us-east-1 --stack-id ${OpsWorksStack} --local --use-instance-profile
-            sleep 60
-            ec2_instance_id=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) && \
-              instance=$(aws opsworks describe-instances --region us-east-1 --stack-id ${OpsWorksStack} | jq --arg ec2_instance_id "$ec2_instance_id" '.Instances[] | select (.Ec2InstanceId==$ec2_instance_id)' | jq -r .Arn | cut -d'/' -f2) && \
-              aws opsworks assign-instance --instance-id $instance --layer-ids ${Layer} --region us-east-1
-            /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
-            /opt/aws/bin/cfn-signal --exit-code $? \
-                     --stack  ${AWS::StackName} \
-                     --resource NodeGroup \
-                     --region ${AWS::Region}
+      LaunchTemplateData:
+        SecurityGroupIds:
+        - Fn::GetAtt: NodeSecurityGroup.GroupId
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize:
+                Ref: NodeVolumeSize
+              VolumeType: gp2
+              DeleteOnTermination: true
+        DisableApiTermination: false
+        EbsOptimized: true
+        IamInstanceProfile:
+          Arn:
+            Fn::GetAtt:
+              - NodeInstanceProfile
+              - Arn
+        ImageId:
+          Ref: NodeImageId
+        InstanceInitiatedShutdownBehavior: terminate
+        InstanceType:
+          Ref: NodeInstanceType
+        KeyName:
+          Ref: KeyName
+        Monitoring:
+          Enabled: true
+        TagSpecifications:
+        - ResourceType: instance
+          Tags:
+            - Key: Name
+              Value:
+                Fn::Sub: "${ClusterName}-${NodeGroupName}-Node"
+            - Key:
+                Fn::Sub: 'kubernetes.io/cluster/${ClusterName}'
+              Value: 'owned'
+        UserData:
+          Fn::Base64:
+            Fn::Sub: |
+              #cloud-config
+              packages:
+              - jq
+              - awscli
+              write_files:
+              - path: /etc/cron.d/da-monitoring
+                content: |
+                  AWS_REGION=${AWS::Region}
+                  * * * * * root /usr/local/bin/report-cpu-load.sh ${AWS::Region} ${ClusterName}
+                permissions: '0600'
+              - path: /usr/local/bin/report-cpu-load.sh
+                content: |
+                  #!/bin/sh
+                  set -e
+                  region=$1
+                  cluster=$2
+                  val=$(cat /proc/loadavg | cut -d ' ' -f1)
+                  aws cloudwatch put-metric-data --region $region \
+                    --namespace Custom/EKS --metric-name CPULoad \
+                    --dimensions ClusterName=$cluster --value $val
+                permissions: '0755'
+              - path: /usr/local/bin/register-opsworks.sh
+                content: |
+                  #!/bin/bash
+                  set -e
+                  aws opsworks register --infrastructure-class ec2 --region us-east-1 --stack-id ${OpsWorksStack} --local --use-instance-profile
+                  sleep 60
+                  ec2_instance_id=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+                  instance=$(aws opsworks describe-instances --region us-east-1 --stack-id ${OpsWorksStack} | jq --arg ec2_instance_id "$ec2_instance_id" '.Instances[] | select (.Ec2InstanceId==$ec2_instance_id)' | jq -r .Arn | cut -d'/' -f2)
+                  aws opsworks assign-instance --instance-id $instance --layer-ids ${Layer} --region us-east-1
+                permissions: '0755'
+              runcmd:
+              - /usr/local/bin/register-opsworks.sh
+              - /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
+              - /opt/aws/bin/cfn-signal --exit-code $? --stack  ${AWS::StackName} --resource NodeGroup --region ${AWS::Region}
+
+  ScalableTarget:
+    Condition: UseSpotFleet
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      ResourceId:
+        Fn::Join:
+          - /
+          - - spot-fleet-request
+            - Ref: SpotFleet
+      ServiceNamespace: ec2
+      ScalableDimension: ec2:spot-fleet-request:TargetCapacity
+      MinCapacity:
+        Ref: NodeAutoScalingGroupMinSize
+      RoleARN:
+        Fn::GetAtt:
+          - SpotFleetIAMAutoScaleRole
+          - Arn
+      MaxCapacity:
+        Ref: NodeAutoScalingGroupMaxSize
+
+  SpotFleetCPUUtilizationTargetTracking:
+    Condition: UseSpotFleet
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: CPUUtilizationTargetTracking
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId:
+        Ref: ScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        DisableScaleIn: false
+        TargetValue: 70
+        ScaleInCooldown: 3600
+        ScaleOutCooldown: 300
+        PredefinedMetricSpecification:
+          PredefinedMetricType: EC2SpotFleetRequestAverageCPUUtilization
+
+  SpotFleetCPULoadTargetTacking:
+    Condition: UseSpotFleet
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: CPULoadTargetTracking
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId:
+        Ref: ScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        DisableScaleIn: false
+        TargetValue:
+          Fn::FindInMap:
+            - Limits
+            - Ref: NodeInstanceType
+            - Cpu
+        ScaleInCooldown: 3600
+        ScaleOutCooldown: 300
+        CustomizedMetricSpecification:
+          MetricName: CPULoad
+          Namespace: Custom/EKS
+          Dimensions:
+          - Name: ClusterName
+            Value:
+              Ref: ClusterName
+          Statistic: Average
+
+  AsgCpuUtilizationTargetTracking:
+    Condition: UseAsg
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName:
+        Ref: ASG
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        DisableScaleIn: false
+        TargetValue: 70
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+
+  AsgCpuLoadTargetTracking:
+    Condition: UseAsg
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName:
+        Ref: ASG
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        DisableScaleIn: false
+        TargetValue:
+          Fn::FindInMap:
+            - Limits
+            - Ref: NodeInstanceType
+            - Cpu
+        CustomizedMetricSpecification:
+          MetricName: CPULoad
+          Namespace: Custom/EKS
+          Dimensions:
+          - Name: ClusterName
+            Value:
+              Ref: ClusterName
+          Statistic: Average
 
   VPC:
     Condition: CreateVpc
