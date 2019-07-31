@@ -23,4 +23,12 @@ monitoring:
 	kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
 	helm init --service-account tiller
 	helm install --name monitoring  --namespace monitoring stable/prometheus-operator --set kubelet.serviceMonitor.https=true --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+	kubectl delete service monitoring-grafana -n monitoring
+	(kubectl delete configmap nginx-dashboard -n monitoring) || (true)
+	kubectl delete configmap monitoring-grafana -n monitoring
+	kubectl delete secret monitoring-grafana -n monitoring
+	python3 replace_ldap_toml.py
+	kubectl apply -f custom-grafana-config.yaml
+	kubectl patch deployment monitoring-grafana --patch "$(cat patch-deployment-grafana.yaml)" -n monitoring
+	kubectl -n monitoring delete po -l app=grafana
 
