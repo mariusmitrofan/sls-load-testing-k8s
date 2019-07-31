@@ -1,1 +1,1 @@
-# sls-load-testing-k8s
+# cloudformation-eks
