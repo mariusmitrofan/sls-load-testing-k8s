@@ -72,7 +72,6 @@ data:
     url = https://grafana.net
     [log]
     mode = console
-    filters = ldap:debug
     [paths]
     data = /var/lib/grafana/data
     logs = /var/log/grafana
