@@ -118,7 +118,7 @@ Parameters:
   NodeAutoScalingGroupMinSize:
     Type: Number
     Description: Minimum size of Node Group ASG.
-    Default: 1
+    Default: 2
     
   NodeAutoScalingGroupMaxSize:
     Type: Number
