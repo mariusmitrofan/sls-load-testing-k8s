@@ -10,7 +10,7 @@ metadata:
   namespace: default
 spec:
   progressDeadlineSeconds: 600
-  replicas: 5
+  replicas: 30
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -201,7 +201,7 @@ metadata:
   namespace: default
 spec:
   progressDeadlineSeconds: 600
-  replicas: 5
+  replicas: 30
   revisionHistoryLimit: 10
   selector:
     matchLabels:
