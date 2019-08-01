@@ -129,6 +129,8 @@ metadata:
     app: nginx
   name: nginx
   namespace: default
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
 spec:
   ports:
   - name: metrics
@@ -155,21 +157,14 @@ metadata:
     app: nginx
 data:
   nginx-sample.conf: |-
+    upstream whoami {
+      server whoami;
+    }
     server {
       listen 80 default_server;
 
-      location /healthcheck {
-        return 200 'Received your GET request';
-        limit_except GET {
-          deny all;
-        }
-      }
-
-      location /application {
-        return 200 'Received your POST request';
-        limit_except POST {
-          deny all;
-        }
+      location / {
+        proxy_pass http://whoami;
       }
     }
 
@@ -193,3 +188,87 @@ spec:
   selector:
     matchLabels:
       app: nginx
+---
+###--------WHOAMI DEPLOYMENT--------###
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: whoami
+    release: whoami-release
+  name: whoami
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 5
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: whoami
+      release: whoami-release
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: whoami
+        release: whoami-release
+      namespace: default
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - image: mmitrofan/whoami:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /livenessProbe
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: whoami
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readinessProbe
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      shareProcessNamespace: false
+      terminationGracePeriodSeconds: 30
+---
+###--------WHOAMI SERVICE--------###
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: whoami
+  name: whoami
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: whoami
+  sessionAffinity: None
+  type: ClusterIP
