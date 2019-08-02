@@ -2,9 +2,7 @@ deploy.yaml
 deploy\.yaml
 Makefile
 admin-password
-
 admin-user
-
 deploy-grafana\.yaml
-
 ldap\.toml
+.env
