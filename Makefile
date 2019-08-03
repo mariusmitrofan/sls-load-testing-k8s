@@ -29,6 +29,15 @@ launch_stack:
 		--parameters $(cat parameters.json)
 	aws cloudformation wait stack-create-complete --stack-name ${StackName} --profile ${AwsProfile}
 	aws eks update-kubeconfig --name ${ClusterName} --profile ${AwsProfile}
+update_stack:
+	aws cloudformation update-stack \
+		--stack-name ${StackName} \
+		--template-body file://cloudformation-template.yaml \
+		--profile ${AwsProfile} \
+		--capabilities CAPABILITY_IAM  CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+		--parameters $(cat parameters.json)
+	aws cloudformation wait stack-update-complete --stack-name ${StackName} --profile ${AwsProfile}
+	aws eks update-kubeconfig --name ${ClusterName} --profile ${AwsProfile}
 bootstrap:
 	pip3 install python-dotenv
 	make apply_base

@@ -36,10 +36,6 @@
     "ParameterValue": "${ClusterVersion}"
   },
   {
-    "ParameterKey": "BootstrapArguments",
-    "ParameterValue": "${BootstrapArguments}"
-  },
-  {
     "ParameterKey": "NodeGroupName",
     "ParameterValue": "${NodeGroupName}"
   },

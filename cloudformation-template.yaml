@@ -141,11 +141,6 @@ Parameters:
       - "1.10"
     Default: "1.13"
 
-  BootstrapArguments:
-    Description: Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami
-    Default: ""
-    Type: String
-
   NodeGroupName:
     Description: Unique identifier for the Node Group.
     Type: String
@@ -296,7 +291,6 @@ Metadata:
           - NodeImageId
           - NodeVolumeSize
           - KeyName
-          - BootstrapArguments
           - UseSpotFleetInstances
           - NodePublicIpAddress
       -
@@ -1072,7 +1066,7 @@ Resources:
                 permissions: '0755'
               runcmd:
               - /usr/local/bin/register-opsworks.sh
-              - /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
+              - /etc/eks/bootstrap.sh ${ClusterName}
               - /opt/aws/bin/cfn-signal --exit-code $? --stack  ${AWS::StackName} --resource NodeGroup --region ${AWS::Region}
 
   ScalableTarget:
