@@ -2,6 +2,10 @@ ifeq (,$(wildcard .env))
 $(error "Please create the .env file first. Use .env.dist as baseline.")
 endif
 
+ifeq (, $(shell which aws))
+$(error "AWS CLI was not detected in $(PATH). Please install it first.")
+endif
+
 ifeq (, $(shell which kubectl))
 $(error "KUBECTL was not detected in $(PATH). Please install it first.")
 endif
@@ -21,39 +25,8 @@ launch_stack:
 		--stack-name ${StackName} \
 		--template-body file://cloudformation-template.yaml \
 		--profile ${AwsProfile} \
-		--parameters \
-				ParameterKey=OpsWorksStackName,ParameterValue=${OpsWorksStackName} \
-				ParameterKey=KeyName,ParameterValue=${KeyName} \
-				ParameterKey=NodeImageId,ParameterValue=${NodeImageId} \
-				ParameterKey=NodePublicIpAddress,ParameterValue=${NodePublicIpAddress} \
-				ParameterKey=NodeInstanceType,ParameterValue=${NodeInstanceType} \
-				ParameterKey=NodeAutoScalingGroupMinSize,ParameterValue=${NodeAutoScalingGroupMinSize} \
-				ParameterKey=NodeAutoScalingGroupMaxSize,ParameterValue=${NodeAutoScalingGroupMaxSize} \
-				ParameterKey=NodeVolumeSize,ParameterValue=${NodeVolumeSize} \
-				ParameterKey=ClusterName,ParameterValue=${ClusterName} \
-				ParameterKey=ClusterVersion,ParameterValue=${ClusterVersion} \
-				ParameterKey=BootstrapArguments,ParameterValue=${BootstrapArguments} \
-				ParameterKey=NodeGroupName,ParameterValue=${NodeGroupName} \
-				ParameterKey=UseSpotFleetInstances,ParameterValue=${UseSpotFleetInstances} \
-				ParameterKey=NewVpc,ParameterValue=${NewVpc} \
-				ParameterKey=VpcId,ParameterValue=${VpcId} \
-				ParameterKey=Subnets,ParameterValue=${Subnets} \
-				ParameterKey=VPCSubnetCidrBlock,ParameterValue=${VPCSubnetCidrBlock} \
-				ParameterKey=AvailabilityZone1,ParameterValue=${AvailabilityZone1} \
-				ParameterKey=AvailabilityZone2,ParameterValue=${AvailabilityZone2} \
-				ParameterKey=AvailabilityZone3,ParameterValue=${AvailabilityZone3} \
-				ParameterKey=PublicSubnetCidrBlock1,ParameterValue=${PublicSubnetCidrBlock1} \
-				ParameterKey=PublicSubnetCidrBlock2,ParameterValue=${PublicSubnetCidrBlock2} \
-				ParameterKey=PublicSubnetCidrBlock3,ParameterValue=${PublicSubnetCidrBlock3} \
-				ParameterKey=PrivateSubnetCidrBlock1,ParameterValue=${PrivateSubnetCidrBlock1} \
-				ParameterKey=PrivateSubnetCidrBlock2,ParameterValue=${PrivateSubnetCidrBlock2} \
-				ParameterKey=PrivateSubnetCidrBlock3,ParameterValue=${PrivateSubnetCidrBlock3} \
-				ParameterKey=RemoteCidrForSecurityGroup,ParameterValue=${RemoteCidrForSecurityGroup} \
-				ParameterKey=RemoteCidrForPublicAcl,ParameterValue=${RemoteCidrForPublicAcl} \
-				ParameterKey=AllowAllInboundPublicRuleNumber,ParameterValue=${AllowAllInboundPublicRuleNumber} \
-				ParameterKey=AllowAllInboundPrivateRuleNumber,ParameterValue=${AllowAllInboundPrivateRuleNumber} \
-				ParameterKey=AllowAllOutboundPublicRuleNumber,ParameterValue=${AllowAllOutboundPublicRuleNumber} \
-				ParameterKey=AllowAllOutboundPrivateRuleNumber,ParameterValue=${AllowAllOutboundPrivateRuleNumber}
+		--capabilities CAPABILITY_IAM  CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+		--parameters $(cat parameters.json)
 	aws cloudformation wait stack-create-complete --stack-name ${StackName} --profile ${AwsProfile}
 	aws eks update-kubeconfig --name ${ClusterName} --profile ${AwsProfile}
 bootstrap:

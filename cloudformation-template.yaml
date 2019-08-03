@@ -3,11 +3,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Launch Amazon EKS stack in new or existing VPC'
 
 Parameters:
-  OpsWorksStackName:
-    Description: The stack name in which all k8s nodes are joined
-    Type: String
-    Default: k8s
-
   KeyName:
     Description: The EC2 Key Pair to allow SSH access to the instances
     Type: AWS::EC2::KeyPair::KeyName
@@ -175,12 +170,12 @@ Parameters:
 
   VpcId:
     Description: The VPC of the worker instances
-    Type: AWS::EC2::VPC::Id
+    Type: String
     Default: vpc-7192df15
 
   Subnets:
     Description: The subnets where workers can be created. Please specify at least 2 subnets
-    Type: List<AWS::EC2::Subnet::Id>
+    Type: CommaDelimitedList
     Default: subnet-d1d412fb,subnet-a28e179f,subnet-9c6ea5c4
 
   # Subnets
@@ -304,7 +299,6 @@ Metadata:
           - BootstrapArguments
           - UseSpotFleetInstances
           - NodePublicIpAddress
-          - OpsWorksStackName
       -
         Label:
           default: "Worker Network Configuration"
@@ -575,7 +569,7 @@ Resources:
     Properties: 
       AgentVersion: LATEST
       Name: 
-        Ref: OpsWorksStackName
+        Ref: AWS::StackName
       ServiceRoleArn: 
         Fn::GetAtt:
           - ServiceRole
