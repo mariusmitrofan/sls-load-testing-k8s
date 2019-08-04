@@ -417,15 +417,36 @@ Resources:
             def lambda_handler(event, context):
               responseValue={}
               client = boto3.client('ec2',region_name="${AWS::Region}")
-
+              response = client.create_tags(
+                Resources=event['ResourceProperties']['SubnetsEksNodesPrivate'],
+                Tags=[{'Key': 'kubernetes.io/cluster/{}'.format(event['ResourceProperties']['ClusterName']),'Value': 'shared'},
+                {'Key': 'kubernetes.io/role/internal-elb','Value': '1'}]
+              )
+              response = client.create_tags(
+                Resources=event['ResourceProperties']['SubnetsEksMasterPublic'],
+                Tags=[{'Key': 'kubernetes.io/cluster/{}'.format(event['ResourceProperties']['ClusterName']),'Value': 'shared'},
+                {'Key': 'kubernetes.io/role/elb','Value': '1'}]
+              )
+              response = client.create_tags(
+                Resources=event['ResourceProperties']['VpcId'],
+                Tags=[{'Key': 'kubernetes.io/cluster/{}'.format(event['ResourceProperties']['ClusterName']),'Value': 'shared'}]
+              )
               cfnresponse.send(event, context, cfnresponse.SUCCESS, responseValue)
               return True
 
-  # TagSubnetsResult:
-  #   Type: Custom::TagSubnet
-  #   Properties:
-  #     ServiceToken:
-  #       Fn::GetAtt: TagSubnetsFunction.Arn
+  TagSubnetsResult:
+    Type: Custom::TagSubnet
+    Properties:
+      ServiceToken:
+        Fn::GetAtt: TagSubnetsFunction.Arn
+      SubnetsEksNodesPrivate:
+        Ref: SubnetsEksNodesPrivate
+      SubnetsEksMasterPublic:
+        Ref: SubnetsEksMasterPublic
+      VpcId:
+        Ref: VpcId
+      ClusterName:
+        Ref: ClusterName
 
   ServiceRole:
     Type: AWS::IAM::Role
