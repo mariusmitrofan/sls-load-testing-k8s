@@ -28,6 +28,13 @@ make launch_stack
 make bootstrap
 ```
 
+## Make changes to deployment
+* Make your changes to the YAML files
+* Deploy (just) the YAML file changes
+```bash
+make deploy
+```
+
 ## SSH permissions
 
 SSH is handled by OpsWorks automatically. In order to grant a user SSH permissions, the following needs to happen:

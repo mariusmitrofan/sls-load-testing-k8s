@@ -20,6 +20,11 @@ endif
 
 include .env
 
+FETCH_ARN = $(shell aws cloudformation describe-stacks --profile ${AwsProfile} --stack-name ${StackName} --query "Stacks[0].Outputs[?OutputKey=='NodeInstanceRole'].OutputValue" --output text)
+FETCH_CONTEXT = $(shell aws cloudformation describe-stacks --profile ${AwsProfile} --stack-name ${StackName} --query "Stacks[0].Outputs[?OutputKey=='Context'].OutputValue" --output text)
+SET_ARN=$(eval export AWS_ARN=$(FETCH_ARN))
+SET_CONTEXT=$(eval export CONTEXT=$(FETCH_CONTEXT))
+
 launch_stack:
 	aws cloudformation create-stack \
 		--stack-name ${StackName} \
@@ -41,29 +46,38 @@ update_stack:
 bootstrap:
 	pip3 install python-dotenv
 	make apply_base
+	make install_helm
+	make install_prometheus_helm
 	make monitoring
 	make apply_nginx
 deploy:
 	make apply_base
 	make apply_nginx
+	make monitoring
 apply_base:
-	export AWS_ARN=$(aws cloudformation describe-stacks --profile ${AwsProfile} --stack-name ${StackName} --query "Stacks[0].Outputs[?OutputKey=='NodeInstanceRole'].OutputValue" --output text)
-	export CONTEXT=$(aws cloudformation describe-stacks --profile ${AwsProfile} --stack-name ${StackName} --query "Stacks[0].Outputs[?OutputKey=='Context'].OutputValue" --output text)
+	$(SET_ARN)
+	$(SET_CONTEXT)
 	sed -e "s~arn_aws_role_here~${AWS_ARN}~g" -e 's~ES_HOST~${ES_HOST}~g' -e 's~ES_PORT~${ES_PORT}~g' k8s_base-resources.yaml > deploy.yaml
 	kubectl config use-context ${CONTEXT}
 	kubectl apply -f deploy.yaml
 	rm -f deploy.yaml
 apply_nginx:
-	export CONTEXT=$(aws cloudformation describe-stacks --profile ${AwsProfile} --stack-name ${StackName} --query "Stacks[0].Outputs[?OutputKey=='Context'].OutputValue" --output text)
+	$(SET_CONTEXT)
 	kubectl config use-context ${CONTEXT}
 	kubectl apply -f k8s_nginx-resources.yaml
-monitoring:
-	export CONTEXT=$(aws cloudformation describe-stacks --profile ${AwsProfile} --stack-name ${StackName} --query "Stacks[0].Outputs[?OutputKey=='Context'].OutputValue" --output text)
+install_helm:
+	$(SET_CONTEXT)
 	kubectl config use-context ${CONTEXT}
 	kubectl create serviceaccount --namespace kube-system tiller
 	kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-	helm init --service-account tiller
+	helm init --upgrade --service-account tiller --wait
+install_prometheus_helm:
+	$(SET_CONTEXT)
+	kubectl config use-context ${CONTEXT}
 	helm install --name monitoring  --namespace monitoring stable/prometheus-operator --set kubelet.serviceMonitor.https=true --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+monitoring:
+	$(SET_CONTEXT)
+	kubectl config use-context ${CONTEXT}
 	kubectl delete service monitoring-grafana -n monitoring
 	(kubectl delete configmap nginx-dashboard -n monitoring) || (true)
 	kubectl delete configmap monitoring-grafana -n monitoring
@@ -71,6 +85,6 @@ monitoring:
 	python3 replace_ldap_toml.py
 	kubectl apply -f deploy-custom-grafana-config.yaml
 	rm -f deploy-custom-grafana-config.yaml
-	kubectl patch deployment monitoring-grafana --patch "$(cat patch-deployment-grafana.yaml)" -n monitoring
+	kubectl patch deployment monitoring-grafana --patch '{"spec":{"template":{"spec":{"containers":[{"name":"grafana","volumeMounts":[{"mountPath":"/tmp/dashboards/nginx-dashboard.json","name":"nginx-dashboard"}]}],"volumes":[{"configMap":{"defaultMode":420,"name":"nginx-dashboard"},"name":"nginx-dashboard"}]}}}}' -n monitoring
 	kubectl -n monitoring delete po -l app=grafana
 
